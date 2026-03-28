@@ -1,0 +1,17 @@
+# === Training & Native Inference (Apple Silicon / MLX) ===
+mlx>=0.22.1
+mlx-lm>=0.21.1
+numpy>=1.26.0
+requests>=2.31.0
+geopy>=2.4.0
+
+# === Inference Server (GGUF / Hetzner CPU) ===
+# On macOS, if build fails, install with: CMAKE_ARGS="-DGGML_METAL=on" pip install llama-cpp-python
+llama-cpp-python>=0.3.5
+fastapi>=0.115.0
+uvicorn[standard]>=0.30.0
+pydantic>=2.9.0
+pydantic-settings>=2.5.0
+
+# === Data Processing ===
+datasets>=2.20.0

@@ -1,1 +1,7 @@
 *target/
+*__pycache__/
+*checkpoints/
+*fused_model/
+*venv/
+*models/
+.DS_Store

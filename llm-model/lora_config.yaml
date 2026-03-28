@@ -1,0 +1,19 @@
+# --- MLX LoRA Configuration ---
+model: "Qwen/Qwen2.5-1.5B-Instruct"
+train: true
+data: "/Users/lidldev/Documents/tua-astro-hackathon/llm-model/data"
+iters: 1000
+batch_size: 4
+learning_rate: 2e-05
+adapter_path: "/Users/lidldev/Documents/tua-astro-hackathon/llm-model/checkpoints"
+save_every: 100
+
+# Number of layers to fine-tune
+lora_layers: 16
+
+# LoRA specific parameters
+lora_parameters:
+  rank: 16
+  alpha: 32
+  dropout: 0.05
+  scale: 10.0
