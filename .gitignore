@@ -5,3 +5,4 @@
 *venv/
 *models/
 .DS_Store
+/llm-model/convert_hf_to_gguf.py
