@@ -1,9 +1,12 @@
+use axum::{Json, Router, extract::Query, routing::get};
 use fetch::fetch_recent_events;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
+use std::net::SocketAddr;
+use tower_http::cors::{Any, CorsLayer};
 
-type Error = Box<dyn std::error::Error>;
+type Error = Box<dyn std::error::Error + Send + Sync>;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct EarthquakeEvent {
     pub rms: String,
@@ -25,7 +28,7 @@ pub struct EarthquakeEvent {
     pub last_update_date: Option<String>,
 }
 
-#[derive(Debug, serde::Serialize)]
+#[derive(Debug, Serialize)]
 struct RiskRequest {
     events: Vec<EarthquakeEvent>,
 }
@@ -35,11 +38,51 @@ struct RiskResponse {
     analysis: String,
 }
 
+#[derive(Debug, Serialize)]
+struct ApiResponse {
+    events: Vec<EarthquakeEvent>,
+    ai_analysis: Option<String>,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct Coordinate {
+    pub latitude: f64,
+    pub longitude: f64,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct HazardEvent {
+    #[serde(rename = "type")]
+    pub event_type: String,
+    pub location: String,
+    pub severity: f64,
+    pub latitude: f64,
+    pub longitude: f64,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct NavigationRequest {
+    pub route_type: String,
+    pub hazard: HazardEvent,
+    pub origin: Coordinate,
+    pub destination: Coordinate,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct NavigationResponse {
+    pub text_response: String,
+    pub suggested_waypoints: Option<Vec<Coordinate>>,
+}
+
+#[derive(Deserialize)]
+struct Params {
+    min_mag: Option<f64>,
+}
+
 async fn get_ai_risk_assessment(events: &[fetch::models::AfadEvent]) -> Result<String, Error> {
-    // Convert fetch::models::AfadEvent to EarthquakeEvent
-    // In a real app we might unify these types, but here we'll map a few over
     let mut mapped_events = Vec::new();
-    for e in events.iter().take(5) { // Send top 5 to AI
+    // Send top 5 most recent/significant events to AI for context
+    for e in events.iter().take(5) {
         mapped_events.push(EarthquakeEvent {
             rms: e.rms.clone(),
             event_id: e.event_id.clone(),
@@ -60,9 +103,12 @@ async fn get_ai_risk_assessment(events: &[fetch::models::AfadEvent]) -> Result<S
     }
 
     let client = reqwest::Client::new();
+    // This expects the Python llm-model server to be running
     let res = client
         .post("http://127.0.0.1:8000/predict/risk")
-        .json(&RiskRequest { events: mapped_events })
+        .json(&RiskRequest {
+            events: mapped_events,
+        })
         .send()
         .await?;
 
@@ -74,24 +120,81 @@ async fn get_ai_risk_assessment(events: &[fetch::models::AfadEvent]) -> Result<S
     }
 }
 
-#[tokio::main]
-async fn main() -> Result<(), Error> {
-    println!("Fetching events from fetch_recent_events...");
-    let events = fetch_recent_events(3.0, 24).await?;
-    println!("Fetched {} events.", events.len());
-    
-    if !events.is_empty() {
-        println!("Sending top events to AI for risk assessment...");
-        match get_ai_risk_assessment(&events).await {
-            Ok(analysis) => {
-                println!("\n=== AI RISK ASSESSMENT ===\n{}\n=========================\n", analysis);
-            }
-            Err(e) => {
-                println!("Failed to get AI assessment: {}", e);
-                println!("(Ensure the Python AI model server is running on port 8000)");
-            }
-        }
+async fn get_navigation_route(
+    Json(req): Json<NavigationRequest>,
+) -> Result<Json<NavigationResponse>, String> {
+    let client = reqwest::Client::new();
+
+    let res = client
+        .post("http://127.0.0.1:8000/predict/navigation")
+        .json(&req)
+        .send()
+        .await
+        .map_err(|e| e.to_string())?;
+
+    if res.status().is_success() {
+        let nav_res: NavigationResponse = res.json().await.map_err(|e| e.to_string())?;
+        Ok(Json(nav_res))
+    } else {
+        Err(format!("AI Server returned error: {}", res.status()))
     }
-    
-    Ok(())
+}
+
+async fn get_earthquake_data(Query(params): Query<Params>) -> Json<ApiResponse> {
+    let min_mag = params.min_mag.unwrap_or(3.0);
+
+    match fetch_recent_events(min_mag, 24).await {
+        Ok(events) => {
+            let ai_analysis = get_ai_risk_assessment(&events).await.ok();
+
+            let mapped_events = events
+                .into_iter()
+                .map(|e| EarthquakeEvent {
+                    rms: e.rms,
+                    event_id: e.event_id,
+                    location: e.location,
+                    latitude: e.latitude,
+                    longitude: e.longitude,
+                    depth: e.depth,
+                    event_type: e.event_type,
+                    magnitude: e.magnitude,
+                    country: e.country,
+                    province: e.province,
+                    district: e.district,
+                    neighborhood: e.neighborhood,
+                    date: e.date,
+                    is_event_update: e.is_event_update,
+                    last_update_date: e.last_update_date,
+                })
+                .collect();
+
+            Json(ApiResponse {
+                events: mapped_events,
+                ai_analysis,
+            })
+        }
+        Err(_) => Json(ApiResponse {
+            events: vec![],
+            ai_analysis: Some("Failed to fetch earthquake data from AFAD.".to_string()),
+        }),
+    }
+}
+
+#[tokio::main]
+async fn main() {
+    let cors = CorsLayer::new()
+        .allow_origin(Any)
+        .allow_methods(Any)
+        .allow_headers(Any);
+
+    let app = Router::new()
+        .route("/api/data", get(get_earthquake_data))
+        .route("/api/navigation", axum::routing::post(get_navigation_route))
+        .layer(cors);
+
+    let addr = SocketAddr::from(([127, 0, 0, 1], 3001));
+    println!("Backend server listening on http://{}", addr);
+
+    let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
+    axum::serve(listener, app).await.unwrap();
 }
