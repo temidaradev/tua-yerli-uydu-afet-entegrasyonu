@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="TUA - Afet Yönetiminde Yerli Uydu Verisi Entegrasyonu. Uydu görüntülerini yapay zeka ile analiz edip kurtarma ekiplerine en güvenli rotayı çizen sistem.">
+  <meta name="keywords" content="TUA, uydu, afet yönetimi, kurtarma, güvenli rota, yapay zeka, BKZS">
+  <meta name="author" content="TUA - Türkiye Uzay Ajansı">
+  <meta name="theme-color" content="#060a1e">
+  
+  <title>TUA BKZS — Bölgesel Konumlama ve Zamanlama Sistemi</title>
+
+  <!-- Favicon -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛰️</text></svg>">
+
+  <!-- Global Styles -->
+  <link rel="stylesheet" href="styles/main.css">
+
+  <!-- Leaflet.js -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+
+  <!-- Web Components -->
+  <script type="module" src="components/alert-system.js"></script>
+  <script type="module" src="components/analysis-dashboard.js"></script>
+  <script type="module" src="components/route-planner.js"></script>
+  <script type="module" src="components/satellite-map.js"></script>
+  <script type="module" src="components/control-panel.js"></script>
+  <script type="module" src="components/app-shell.js"></script>
+</head>
+<body>
+  <tua-app-shell></tua-app-shell>
+  <tua-alert-system></tua-alert-system>
+</body>
+</html>
