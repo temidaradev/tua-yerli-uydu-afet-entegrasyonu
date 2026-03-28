@@ -1,8 +1,17 @@
+"""
+TUA BKZS — Unified CLI Entry Point
+
+Commands:
+    python run.py prepare-data          Generate training dataset
+    python run.py train --iters 5000    Train model (long run)
+    python run.py train --resume        Resume interrupted training
+    python run.py serve                 Start API server
+"""
+
 import argparse
 import sys
 from pathlib import Path
 
-# Ensure the src directory is in the path
 sys.path.append(str(Path(__file__).resolve().parent))
 
 from src.core.config import settings
@@ -12,103 +21,107 @@ from src.model.trainer import ModelTrainer
 
 def main():
     parser = argparse.ArgumentParser(
-        description="TUA Disaster AI: Unified Model Management CLI",
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        description="TUA BKZS Afet Yapay Zekası — Model Yönetim CLI",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Kullanım Örnekleri:
+  python run.py prepare-data                  # Eğitim verisi üret
+  python run.py train --iters 5000            # 5000 adım eğit
+  python run.py train --resume --iters 3000   # Kaldığı yerden devam et
+  python run.py serve                         # API sunucusu başlat
+        """,
     )
 
-    subparsers = parser.add_subparsers(dest="command", help="Command to execute")
+    subparsers = parser.add_subparsers(dest="command", help="Çalıştırılacak komut")
 
-    # Data Processing Command
+    # --- Data Processing ---
     data_parser = subparsers.add_parser(
-        "prepare-data", help="Fetch and process generalized crisis training data"
-    )
-    # Keeping these args for backwards compatibility, even though they currently
-    # only apply to the seismic data portion.
-    data_parser.add_argument(
-        "--hours",
-        type=int,
-        default=720,
-        help="Hours of historical data to fetch (seismic)",
+        "prepare-data", help="AFAD verisi çek ve eğitim dataseti oluştur"
     )
     data_parser.add_argument(
-        "--min-mag",
-        type=float,
-        default=3.0,
-        help="Minimum magnitude for filtering (seismic)",
+        "--samples", type=int, default=settings.SYNTHETIC_SAMPLES,
+        help=f"Sentetik örnek sayısı (varsayılan: {settings.SYNTHETIC_SAMPLES})",
     )
 
-    # Training Command
-    train_parser = subparsers.add_parser("train", help="Train the model using MLX LoRA")
+    # --- Training ---
+    train_parser = subparsers.add_parser("train", help="MLX LoRA ile model eğit")
     train_parser.add_argument(
-        "--iters",
-        type=int,
-        default=settings.ITERATIONS,
-        help="Number of training iterations",
+        "--iters", type=int, default=settings.ITERATIONS,
+        help=f"Eğitim iterasyon sayısı (varsayılan: {settings.ITERATIONS})",
     )
     train_parser.add_argument(
-        "--no-fuse",
-        action="store_true",
-        help="Skip the model fusion step after training",
+        "--resume", action="store_true",
+        help="Son checkpoint'ten devam et",
+    )
+    train_parser.add_argument(
+        "--no-fuse", action="store_true",
+        help="Eğitim sonrası model birleştirme adımını atla",
     )
 
-    # Inference/API Command
-    api_parser = subparsers.add_parser(
-        "serve", help="Start the FastAPI inference server"
+    # --- API Server ---
+    api_parser = subparsers.add_parser("serve", help="FastAPI sunucusu başlat")
+    api_parser.add_argument(
+        "--host", default=settings.API_HOST, help="Sunucu adresi"
     )
     api_parser.add_argument(
-        "--host", default=settings.API_HOST, help="Host to bind the server to"
-    )
-    api_parser.add_argument(
-        "--port", type=int, default=settings.API_PORT, help="Port to bind the server to"
+        "--port", type=int, default=settings.API_PORT, help="Sunucu portu"
     )
 
     args = parser.parse_args()
 
     if args.command == "prepare-data":
-        print(f"🛠️  Preparing multi-hazard crisis dataset...")
+        print("🛠️  Eğitim veri seti hazırlanıyor...")
+        
+        # Allow overriding sample count
+        if hasattr(args, 'samples'):
+            settings.SYNTHETIC_SAMPLES = args.samples
+        
         processor = DataProcessor()
-        # You could pass hours and min-mag into a specific setup method in the future
         processor.process_and_save()
-        print("✅ Data preparation complete.")
+        
+        # Print next steps
+        print(f"\n📋 Sonraki adım:")
+        print(f"   python run.py train --iters {settings.ITERATIONS}")
 
     elif args.command == "train":
-        print(f"🔥 Starting training pipeline for {settings.BASE_MODEL}...")
-        trainer = ModelTrainer()
+        print(f"🔥 TUA BKZS Model Eğitimi — {settings.BASE_MODEL}")
 
-        # Check if data exists
         if not (settings.DATA_DIR / "train.jsonl").exists():
-            print(
-                "❌ Error: Training data not found. Run 'python run.py prepare-data' first."
-            )
+            print("❌ Eğitim verisi bulunamadı!")
+            print("   Önce şunu çalıştırın: python run.py prepare-data")
             return
 
-        trainer.run_training(iterations=args.iters)
+        # Print data stats
+        train_lines = sum(1 for _ in open(settings.DATA_DIR / "train.jsonl"))
+        valid_lines = sum(1 for _ in open(settings.DATA_DIR / "valid.jsonl"))
+        print(f"📊 Veri seti: {train_lines:,} eğitim + {valid_lines:,} doğrulama")
+
+        trainer = ModelTrainer()
+        trainer.run_training(iterations=args.iters, resume=args.resume)
 
         if not args.no_fuse:
             trainer.fuse_model()
-            print("\n📦 Next step: Convert the fused model to GGUF for deployment:")
+            print(f"\n📦 GGUF dönüşümü için:")
             print(f"   {trainer.get_conversion_command()}")
         else:
-            print("⚠️  Fusion skipped. Model checkpoints are in 'checkpoints/'")
+            print("⚠️  Model birleştirme atlandı. Checkpoint'ler: checkpoints/")
 
     elif args.command == "serve":
-        # Lazy import to avoid loading heavy dependencies when not needed
         import uvicorn
         from src.api.main import app
 
-        print(f"🌐 Starting TUA Disaster AI API on {args.host}:{args.port}...")
+        print(f"🌐 TUA BKZS API sunucusu başlatılıyor: {args.host}:{args.port}")
 
-        # Check if we have *any* model to serve
         has_mlx = (settings.PROJECT_ROOT / "fused_model").exists()
         has_gguf = settings.model_path.exists()
 
-        if not (has_mlx or has_gguf):
-            print(
-                f"⚠️  Warning: No compiled model found (neither MLX fused_model/ nor {settings.model_path})."
-            )
-            print(
-                "   The server will start, but prediction endpoints will return 503 errors until a model is provided."
-            )
+        if has_mlx:
+            print(f"   🟢 MLX model bulundu: fused_model/")
+        elif has_gguf:
+            print(f"   🟢 GGUF model bulundu: {settings.model_path}")
+        else:
+            print(f"   🟡 Model bulunamadı — tahmin endpoint'leri 503 dönecek.")
+            print(f"      Model eğitmek için: python run.py prepare-data && python run.py train")
 
         uvicorn.run(app, host=args.host, port=args.port)
 
@@ -120,5 +133,5 @@ if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        print("\n👋 Operation cancelled by user.")
+        print("\n👋 İşlem kullanıcı tarafından iptal edildi.")
         sys.exit(0)

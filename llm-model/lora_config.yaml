@@ -1,19 +1,29 @@
-# --- MLX LoRA Configuration ---
+# TUA BKZS — MLX LoRA Training Configuration
+# Optimized for long training on Turkish disaster response data
+
 model: "Qwen/Qwen2.5-1.5B-Instruct"
 train: true
 data: "/Users/lidldev/Documents/tua-astro-hackathon/llm-model/data"
-iters: 1000
-batch_size: 4
-learning_rate: 2e-05
+
+# Training schedule
+iters: 3000
+batch_size: 2
+learning_rate: 1e-05
+
+# Checkpointing
 adapter_path: "/Users/lidldev/Documents/tua-astro-hackathon/llm-model/checkpoints"
-save_every: 100
+save_every: 200
+val_batches: 25
+steps_per_eval: 100
 
-# Number of layers to fine-tune
-lora_layers: 16
+# LoRA architecture — high capacity for geospatial knowledge
+lora_layers: 24
 
-# LoRA specific parameters
 lora_parameters:
-  rank: 16
-  alpha: 32
+  rank: 32
+  alpha: 64
   dropout: 0.05
-  scale: 10.0
+  scale: 2.0
+
+# Gradient accumulation for effective batch size of 8
+grad_checkpoint: true
