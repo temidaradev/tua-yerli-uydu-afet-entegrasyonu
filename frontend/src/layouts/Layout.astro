@@ -1,0 +1,84 @@
+---
+import '../styles/global.css'
+
+interface Props {
+	title: string;
+}
+
+const { title } = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="description" content="TUA Satellite Disaster Response Dashboard" />
+		<meta name="viewport" content="width=device-width" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<meta name="generator" content={Astro.generator} />
+		<title>{title}</title>
+		<link rel="preconnect" href="https://fonts.googleapis.com">
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+		<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+	</head>
+	<body class="bg-slate-950 text-slate-50 font-sans selection:bg-cyan-500/30">
+		<nav class="border-b border-slate-800 bg-slate-900/50 backdrop-blur-md sticky top-0 z-50">
+			<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+				<div class="flex items-center justify-between h-16">
+					<div class="flex items-center gap-2">
+						<div class="w-8 h-8 bg-cyan-500 rounded-lg flex items-center justify-center shadow-[0_0_15px_rgba(6,182,212,0.5)]">
+							<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-slate-950" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+						</div>
+						<span class="text-xl font-bold tracking-tight bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">
+							TUA SATELLITE
+						</span>
+					</div>
+					<div class="flex items-center gap-6 text-sm font-medium text-slate-400">
+						<a href="/" class="hover:text-cyan-400 transition-colors">Dashboard</a>
+						<a href="#" class="hover:text-cyan-400 transition-colors">Alerts</a>
+						<a href="#" class="hover:text-cyan-400 transition-colors">Archive</a>
+					</div>
+				</div>
+			</div>
+		</nav>
+		<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+			<slot />
+		</main>
+		<footer class="border-t border-slate-900 py-8 mt-auto text-center text-slate-500 text-sm">
+			&copy; {new Date().getFullYear()} TUA - Turkish Space Agency Astro Hackathon
+		</footer>
+	</body>
+</html>
+
+<style is:global>
+	:root {
+		--font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+		--font-mono: 'JetBrains Mono', monospace;
+	}
+
+	body {
+		font-family: var(--font-sans);
+		min-height: 100vh;
+		display: flex;
+		flex-direction: column;
+	}
+
+	code {
+		font-family: var(--font-mono);
+	}
+
+	/* Custom Scrollbar */
+	::-webkit-scrollbar {
+		width: 8px;
+	}
+	::-webkit-scrollbar-track {
+		background: #020617;
+	}
+	::-webkit-scrollbar-thumb {
+		background: #1e293b;
+		border-radius: 4px;
+	}
+	::-webkit-scrollbar-thumb:hover {
+		background: #334155;
+	}
+</style>

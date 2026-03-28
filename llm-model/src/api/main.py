@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Literal, Optional
 
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 from pydantic import BaseModel, Field
 
@@ -21,6 +22,14 @@ app = FastAPI(
     title="TUA Satellite Disaster AI API",
     description="Multi-hazard disaster response AI utilizing simulated satellite imagery analysis and mathematical safe routing.",
     version="4.0.0",
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # --- Generalized Schemas ---

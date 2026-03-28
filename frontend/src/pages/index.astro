@@ -1,0 +1,516 @@
+---
+import Layout from "../layouts/Layout.astro";
+
+// This is a server-side rendered (SSR) or pre-rendered page.
+// For a hackathon prototype, we can fetch initial data here or handle it client-side.
+---
+
+<Layout title="TUA Satellite | Disaster Response Dashboard">
+    <div class="space-y-8">
+        <!-- Header Section -->
+        <header
+            class="flex flex-col md:flex-row md:items-end justify-between gap-4"
+        >
+            <div>
+                <h1
+                    class="text-4xl font-extrabold tracking-tight text-white mb-2"
+                >
+                    Disaster <span class="text-cyan-400">Intelligence</span> Dashboard
+                </h1>
+                <p class="text-slate-400 max-w-2xl">
+                    Real-time seismic activity monitoring and AI-powered risk
+                    assessment utilizing TUA satellite data simulation.
+                </p>
+            </div>
+            <div class="flex items-center gap-3">
+                <span class="flex h-3 w-3 relative">
+                    <span
+                        class="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"
+                    ></span>
+                    <span
+                        class="relative inline-flex rounded-full h-3 w-3 bg-cyan-500"
+                    ></span>
+                </span>
+                <span
+                    class="text-sm font-mono text-cyan-400 uppercase tracking-wider"
+                    >Live Satellite Feed</span
+                >
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- AI Risk Assessment Panel -->
+            <section class="lg:col-span-2 space-y-6">
+                <div
+                    class="bg-slate-900/40 border border-slate-800 rounded-2xl overflow-hidden backdrop-blur-sm"
+                >
+                    <div
+                        class="bg-slate-800/50 px-6 py-4 border-b border-slate-800 flex items-center justify-between"
+                    >
+                        <h2
+                            class="flex items-center gap-2 font-semibold text-lg"
+                        >
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                class="w-5 h-5 text-cyan-400"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                ><path
+                                    d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"
+                                ></path></svg
+                            >
+                            AI STRATEGIC ANALYSIS
+                        </h2>
+                        <div class="flex items-center gap-2">
+                            <button
+                                id="nav-mode-btn"
+                                class="hidden text-xs bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 px-3 py-1 rounded-full border border-amber-500/20 transition-all cursor-pointer"
+                            >
+                                MISSION MODE
+                            </button>
+                            <button
+                                id="refresh-btn"
+                                class="text-xs bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 px-3 py-1 rounded-full border border-cyan-500/20 transition-all cursor-pointer"
+                            >
+                                REFRESH DATA
+                            </button>
+                        </div>
+                    </div>
+                    <div id="ai-content" class="p-6 min-h-[350px] relative">
+                        <div
+                            id="ai-loading"
+                            class="absolute inset-0 flex items-center justify-center bg-slate-950/20 backdrop-blur-sm z-10 hidden"
+                        >
+                            <div class="flex flex-col items-center gap-3">
+                                <div
+                                    class="w-8 h-8 border-2 border-cyan-500/30 border-t-cyan-500 rounded-full animate-spin"
+                                >
+                                </div>
+                                <span class="text-sm text-slate-400 font-mono"
+                                    >Analyzing Telemetry...</span
+                                >
+                            </div>
+                        </div>
+
+                        <div id="ai-placeholder" class="space-y-4">
+                            <div
+                                class="h-4 bg-slate-800 rounded w-3/4 animate-pulse"
+                            >
+                            </div>
+                            <div
+                                class="h-4 bg-slate-800 rounded w-full animate-pulse"
+                            >
+                            </div>
+                            <div
+                                class="h-4 bg-slate-800 rounded w-5/6 animate-pulse"
+                            >
+                            </div>
+                            <div
+                                class="h-4 bg-slate-800 rounded w-2/3 animate-pulse"
+                            >
+                            </div>
+                        </div>
+
+                        <div
+                            id="ai-response"
+                            class="prose prose-invert prose-cyan max-w-none hidden"
+                        >
+                            <div
+                                id="nav-badge"
+                                class="hidden mb-4 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20"
+                            >
+                                SAFE ROUTE CALCULATED
+                            </div>
+                            <p
+                                class="text-slate-300 leading-relaxed italic text-lg mb-6"
+                                id="ai-text"
+                            >
+                            </p>
+
+                            <div
+                                id="nav-details"
+                                class="hidden border-t border-slate-800 pt-6 mt-6 space-y-4"
+                            >
+                                <h4
+                                    class="text-amber-400 text-sm font-bold uppercase tracking-widest"
+                                >
+                                    Route Telemetry
+                                </h4>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div
+                                        class="bg-slate-950/50 p-3 rounded-lg border border-slate-800"
+                                    >
+                                        <div
+                                            class="text-[10px] text-slate-500 uppercase"
+                                        >
+                                            Estimated Distance
+                                        </div>
+                                        <div
+                                            class="text-white font-mono"
+                                            id="route-dist"
+                                        >
+                                            -- km
+                                        </div>
+                                    </div>
+                                    <div
+                                        class="bg-slate-950/50 p-3 rounded-lg border border-slate-800"
+                                    >
+                                        <div
+                                            class="text-[10px] text-slate-500 uppercase"
+                                        >
+                                            Safety Buffer
+                                        </div>
+                                        <div
+                                            class="text-white font-mono"
+                                            id="route-buffer"
+                                        >
+                                            Verified
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Satellite Map View -->
+                <link
+                    rel="stylesheet"
+                    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+                    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+                    crossorigin=""
+                />
+                <div
+                    id="map"
+                    class="h-[600px] w-full bg-slate-950 border border-slate-800 rounded-2xl overflow-hidden z-0 shadow-2xl shadow-cyan-500/5"
+                >
+                </div>
+            </section>
+
+            <!-- Recent Events Feed -->
+            <aside class="space-y-6">
+                <div
+                    class="bg-slate-900/40 border border-slate-800 rounded-2xl flex flex-col h-full overflow-hidden backdrop-blur-sm"
+                >
+                    <div
+                        class="bg-slate-800/50 px-6 py-4 border-b border-slate-800"
+                    >
+                        <h2
+                            class="font-semibold text-lg flex items-center gap-2"
+                        >
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                class="w-5 h-5 text-red-400"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                ><path
+                                    d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"
+                                ></path></svg
+                            >
+                            RECENT EVENTS
+                        </h2>
+                    </div>
+                    <div
+                        id="events-list"
+                        class="p-4 space-y-4 max-h-[700px] overflow-y-auto custom-scrollbar"
+                    >
+                        <!-- Events will be injected here -->
+                        <div class="animate-pulse space-y-4">
+                            {
+                                [1, 2, 3, 4, 5].map(() => (
+                                    <div class="h-24 bg-slate-800/50 rounded-xl" />
+                                ))
+                            }
+                        </div>
+                    </div>
+                </div>
+            </aside>
+        </div>
+    </div>
+
+    <script
+        is:inline
+        src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+        crossorigin=""></script>
+    <script is:inline>
+        let map;
+        let markers = [];
+        let routeLine;
+        let currentHazard = null;
+        let originMarker, destMarker;
+
+        function initMap() {
+            if (map) return;
+            // Center on Turkey
+            map = L.map("map", { zoomControl: false }).setView([39.0, 35.0], 6);
+            L.control.zoom({ position: "bottomright" }).addTo(map);
+
+            // Real Satellite Tiles (Esri World Imagery)
+            L.tileLayer(
+                "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+                {
+                    attribution:
+                        "Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community",
+                },
+            ).addTo(map);
+
+            // Add a dark label overlay for context
+            L.tileLayer(
+                "https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{y}/{x}{r}.png",
+                {
+                    attribution: "&copy; CARTO",
+                    subdomains: "abcd",
+                    maxZoom: 20,
+                },
+            ).addTo(map);
+        }
+
+        async function calculateEscapeRoute(event) {
+            const aiLoading = document.getElementById("ai-loading");
+            const aiResponse = document.getElementById("ai-response");
+            const aiText = document.getElementById("ai-text");
+            const navBadge = document.getElementById("nav-badge");
+            const navDetails = document.getElementById("nav-details");
+            const routeDist = document.getElementById("route-dist");
+
+            aiLoading.classList.remove("hidden");
+            aiResponse.classList.add("hidden");
+
+            // Define a simulated origin (User) and destination (Safe Zone)
+            // relative to the earthquake for the prototype
+            const lat = parseFloat(event.latitude);
+            const lon = parseFloat(event.longitude);
+            const origin = { latitude: lat + 0.5, longitude: lon + 0.5 };
+            const dest = { latitude: lat - 0.6, longitude: lon - 0.4 };
+
+            try {
+                const response = await fetch(
+                    "http://127.0.0.1:3001/api/navigation",
+                    {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            route_type: "evacuation",
+                            hazard: {
+                                type: "seismic",
+                                location: event.location,
+                                severity: parseFloat(event.magnitude),
+                                latitude: lat,
+                                longitude: lon,
+                            },
+                            origin: origin,
+                            destination: dest,
+                        }),
+                    },
+                );
+
+                const data = await response.json();
+
+                aiText.textContent = data.text_response;
+                aiResponse.classList.remove("hidden");
+                navBadge.classList.remove("hidden");
+                navDetails.classList.remove("hidden");
+
+                // Draw route on map
+                if (data.suggested_waypoints) {
+                    if (routeLine) map.removeLayer(routeLine);
+                    if (originMarker) map.removeLayer(originMarker);
+                    if (destMarker) map.removeLayer(destMarker);
+
+                    const pathCoords = data.suggested_waypoints.map((w) => [
+                        w.latitude,
+                        w.longitude,
+                    ]);
+
+                    routeLine = L.polyline(pathCoords, {
+                        color: "#f59e0b",
+                        weight: 4,
+                        opacity: 0.8,
+                        dashArray: "10, 10",
+                        lineJoin: "round",
+                    }).addTo(map);
+
+                    originMarker = L.circleMarker(
+                        [origin.latitude, origin.longitude],
+                        {
+                            radius: 6,
+                            fillColor: "#10b981",
+                            color: "#fff",
+                            weight: 2,
+                            fillOpacity: 1,
+                        },
+                    )
+                        .addTo(map)
+                        .bindTooltip("YOUR LOCATION");
+
+                    destMarker = L.circleMarker(
+                        [dest.latitude, dest.longitude],
+                        {
+                            radius: 6,
+                            fillColor: "#6366f1",
+                            color: "#fff",
+                            weight: 2,
+                            fillOpacity: 1,
+                        },
+                    )
+                        .addTo(map)
+                        .bindTooltip("SAFE ZONE");
+
+                    map.fitBounds(routeLine.getBounds(), { padding: [50, 50] });
+
+                    // Simple distance estimate
+                    routeDist.textContent =
+                        (pathCoords.length * 12.5).toFixed(1) + " km";
+                }
+            } catch (error) {
+                console.error("Nav error:", error);
+                aiText.textContent =
+                    "AI Navigation System failed to compute safe path.";
+                aiResponse.classList.remove("hidden");
+            } finally {
+                aiLoading.classList.add("hidden");
+            }
+        }
+
+        async function fetchData() {
+            initMap();
+            const aiLoading = document.getElementById("ai-loading");
+            const aiPlaceholder = document.getElementById("ai-placeholder");
+            const aiResponse = document.getElementById("ai-response");
+            const aiText = document.getElementById("ai-text");
+            const navBadge = document.getElementById("nav-badge");
+            const navDetails = document.getElementById("nav-details");
+            const eventsList = document.getElementById("events-list");
+
+            aiLoading.classList.remove("hidden");
+
+            try {
+                // Fetching from our Rust backend
+                const response = await fetch(
+                    "http://127.0.0.1:3001/api/data?min_mag=3.0",
+                );
+                const data = await response.json();
+
+                // Update AI Analysis
+                if (data.ai_analysis) {
+                    aiText.textContent = data.ai_analysis;
+                    aiPlaceholder.classList.add("hidden");
+                    aiResponse.classList.remove("hidden");
+                    navBadge.classList.add("hidden");
+                    navDetails.classList.add("hidden");
+                } else {
+                    aiText.textContent =
+                        "AI System is currently offline. Ensure both the Rust backend and Python AI server are running.";
+                    aiResponse.classList.remove("hidden");
+                }
+
+                // Update Events List & Map Markers
+                if (data.events && data.events.length > 0) {
+                    // Clear old markers
+                    markers.forEach((m) => map.removeLayer(m));
+                    markers = [];
+
+                    eventsList.innerHTML = data.events
+                        .map((event, index) => {
+                            const lat = parseFloat(event.latitude);
+                            const lon = parseFloat(event.longitude);
+                            const mag = parseFloat(event.magnitude);
+
+                            // Add marker to map
+                            const isMajor = mag >= 5;
+                            const markerColor = isMajor ? "#ef4444" : "#22d3ee";
+                            const marker = L.circleMarker([lat, lon], {
+                                radius: Math.max(mag * 2.5, 5),
+                                fillColor: markerColor,
+                                color: isMajor ? "#fff" : markerColor,
+                                weight: isMajor ? 2 : 1,
+                                opacity: 1,
+                                fillOpacity: 0.6,
+                            }).addTo(map).bindPopup(`
+                                <div class="p-2 min-w-[150px]">
+                                    <div class="font-bold text-slate-900 border-b border-slate-100 mb-2 pb-1">${event.location}</div>
+                                    <div class="text-sm text-slate-700"><b>Magnitude:</b> <span class="${isMajor ? "text-red-600" : "text-cyan-600"} font-bold">${mag}</span></div>
+                                    <div class="text-sm text-slate-700"><b>Depth:</b> ${event.depth}km</div>
+                                    <div class="text-[10px] text-slate-400 mt-2">${event.date}</div>
+                                </div>
+                            `);
+
+                            markers.push(marker);
+
+                            window[`evt_${index}`] = event;
+
+                            return `
+                                <div class="bg-slate-800/30 border border-slate-800 hover:border-cyan-500/50 hover:bg-slate-800/50 transition-all rounded-xl p-4 group cursor-pointer" onclick="map.setView([${lat}, ${lon}], 9); markers[${index}].openPopup();">
+                                    <div class="flex justify-between items-start mb-2">
+                                        <span class="text-2xl font-bold ${isMajor ? "text-red-500" : "text-cyan-400"} font-mono">
+                                            ${event.magnitude}
+                                        </span>
+                                        <span class="text-[10px] font-mono text-slate-500 uppercase bg-slate-900 px-2 py-1 rounded-md border border-slate-800">
+                                            ${event.eventID}
+                                        </span>
+                                    </div>
+                                    <h4 class="text-white font-semibold text-sm group-hover:text-cyan-400 transition-colors line-clamp-1">
+                                        ${event.location}
+                                    </h4>
+                                    <div class="mt-3 flex items-center justify-between">
+                                        <div class="flex flex-col text-[11px] font-mono text-slate-500">
+                                            <span>Depth: ${event.depth} km</span>
+                                            <span>${new Date(event.date).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
+                                        </div>
+                                        <button
+                                            onclick="event.stopPropagation(); calculateEscapeRoute(window['evt_${index}'])"
+                                            class="bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 text-[10px] font-bold px-2 py-1 rounded border border-amber-500/20 transition-all"
+                                        >
+                                            PLAN ESCAPE
+                                        </button>
+                                    </div>
+                                </div>
+                            `;
+                        })
+                        .join("");
+                } else {
+                    eventsList.innerHTML =
+                        '<div class="text-center py-8 text-slate-500">No recent events found.</div>';
+                }
+            } catch (error) {
+                console.error("Fetch error:", error);
+                aiText.textContent =
+                    "Error connecting to the TUA Mission Control backend.";
+                aiResponse.classList.remove("hidden");
+                eventsList.innerHTML =
+                    '<div class="text-center py-8 text-red-400/50">Backend Connection Failed</div>';
+            } finally {
+                aiLoading.classList.add("hidden");
+            }
+        }
+
+        // Initial load
+        fetchData();
+
+        // Handle refresh button
+        document.getElementById("refresh-btn").addEventListener("click", () => {
+            fetchData();
+        });
+    </script>
+</Layout>
+
+<style>
+    .custom-scrollbar::-webkit-scrollbar {
+        width: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: #1e293b;
+        border-radius: 10px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+        background: #334155;
+    }
+</style>
